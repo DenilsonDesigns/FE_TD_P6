@@ -1,3 +1,3 @@
 # FETD Project 6
 
-## Object-Oriented JavaScript
+## Word Guessing Game
