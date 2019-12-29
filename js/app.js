@@ -1,6 +1,7 @@
 const startButton = document.getElementsByClassName("btn__reset")[0];
 const startDiv = document.getElementById("overlay");
-// let NUM_LIVES = 5;
+
+// Event listener for buttons
 startButton.addEventListener("click", e => {
   if (e.target.textContent === "Reset") {
     location.reload(true);
@@ -11,80 +12,44 @@ startButton.addEventListener("click", e => {
 
 function runGame(numLives) {
   let lives = numLives;
-  console.log("Num lives refresh: ", lives);
   startDiv.style.display = "none";
 
-  // parent div of hearts
   const heartDiv = document.getElementById("scoreboard");
   appendHearts(heartDiv, lives);
 
   const phraseDiv = document.getElementById("phrase");
   let wholePhrase = phrases[Math.floor(Math.random() * phrases.length)];
-  console.log("Whole phrase: ", wholePhrase);
   let phrasör = wholePhrase.split("");
-  console.log("Phrasör split: ", phrasör);
-
   let htmlToRender = document.createElement("ul");
-  phrasör.forEach(el => {
-    if (el === " ") {
-      let appendör = document.createElement("li");
-      appendör.innerHTML = " ";
-      appendör.className = "space";
-      return htmlToRender.appendChild(appendör);
-    }
-    let appendör = document.createElement("li");
-    appendör.innerHTML = el;
-    appendör.className = "letter";
-    return htmlToRender.appendChild(appendör);
-  });
 
-  while (phraseDiv.firstChild) {
-    phraseDiv.removeChild(phraseDiv.firstChild);
-  }
-  phraseDiv.appendChild(htmlToRender);
+  renderPhraseToScreen(phrasör, htmlToRender);
+  refreshPhraseDiv(phraseDiv, htmlToRender);
 
-  phrasör = removeChars(phrasör, " ");
+  phrasör = removeSpaces(phrasör, " ");
 
   const keyBoardDiv = document.getElementById("qwerty");
 
-  //refresh classnames of keyboard;
-  for (let el of keyBoardDiv.getElementsByTagName("button")) {
-    el.disabled = false;
-    el.classList.remove("chosen");
-  }
+  refreshKeyboard(keyBoardDiv);
 
   for (let el of keyBoardDiv.getElementsByTagName("button")) {
     el.addEventListener("click", () => {
-      console.log("Num_lives: ", lives);
-      el.disabled = true;
-      el.classList.add("chosen");
+      tagLetterAsChosen(el);
 
       if (!phrasör.includes(el.innerHTML)) {
         lives--;
-        console.log("new phrasor: ", phrasör);
         appendHearts(heartDiv, lives);
         if (lives < 1) {
-          // logic to game over here.
-          startDiv.style.display = "";
-          startDiv.classList.add("lose");
-          startDiv.firstElementChild.innerHTML = "You Lost!";
-          startButton.innerHTML = "Reset";
-          //   console.log("lose");
+          displayLoss(startDiv, startButton);
           return;
         }
       }
 
       for (let square of htmlToRender.children) {
         if (square.innerHTML === el.innerHTML) {
-          square.classList.add("show");
-          phrasör = removeChars(phrasör, el.innerHTML);
-          console.log("new phrasor: ", phrasör);
+          showLetter(square);
+          phrasör = removeSpaces(phrasör, el.innerHTML);
           if (phrasör.length === 0) {
-            //logic to win gayme here
-            startDiv.style.display = "";
-            startDiv.classList.add("win");
-            startDiv.firstElementChild.innerHTML = "You Won!";
-            startButton.innerHTML = "Reset";
+            displayWin(startDiv, startButton);
             return;
           }
         }
@@ -93,7 +58,71 @@ function runGame(numLives) {
   }
 }
 
-function removeChars(baseArray, charToRemove) {
+function refreshPhraseDiv(parentDiv, elementToAppend) {
+  while (parentDiv.firstChild) {
+    parentDiv.removeChild(parentDiv.firstChild);
+  }
+  parentDiv.appendChild(elementToAppend);
+}
+
+function renderPhraseToScreen(phraseToRender, ulToHoldLetters) {
+  phraseToRender.forEach(el => {
+    if (el === " ") {
+      return ulToHoldLetters.appendChild(createLiSpace());
+    }
+    return ulToHoldLetters.appendChild(createLiLetter(el));
+  });
+}
+
+function createLiSpace() {
+  let appendör = document.createElement("li");
+  appendör.innerHTML = " ";
+  appendör.className = "space";
+  return appendör;
+}
+
+function createLiLetter(letter) {
+  let appendör = document.createElement("li");
+  appendör.innerHTML = letter;
+  appendör.className = "letter";
+  return appendör;
+}
+
+function tagLetterAsChosen(letter) {
+  letter.disabled = true;
+  letter.classList.add("chosen");
+}
+
+function refreshKeyboard(keyboard) {
+  for (let el of keyboard.getElementsByTagName("button")) {
+    refreshKeys(el);
+  }
+}
+
+function refreshKeys(key) {
+  key.disabled = false;
+  key.classList.remove("chosen");
+}
+
+function showLetter(element) {
+  element.classList.add("show");
+}
+
+function displayLoss(divToShow, buttonToChange) {
+  divToShow.style.display = "";
+  divToShow.classList.add("lose");
+  divToShow.firstElementChild.innerHTML = "You Lost!";
+  buttonToChange.innerHTML = "Reset";
+}
+
+function displayWin(divToShow, buttonToChange) {
+  divToShow.style.display = "";
+  divToShow.classList.add("win");
+  divToShow.firstElementChild.innerHTML = "You Won!";
+  buttonToChange.innerHTML = "Reset";
+}
+
+function removeSpaces(baseArray, charToRemove) {
   let returnArray = [];
   for (let i = 0; i < baseArray.length; i++) {
     if (baseArray[i] !== charToRemove) {
@@ -106,28 +135,25 @@ function removeChars(baseArray, charToRemove) {
 function appendHearts(parentDiv, numLives) {
   let ol = document.createElement("ol");
   for (let i = 0; i < numLives; i++) {
-    let liToAppend = document.createElement("li");
-    liToAppend.className = "tries";
-    ol.appendChild(liToAppend);
-    let imgToAppend = document.createElement("img");
-    imgToAppend.src = "images/liveHeart.png";
-    imgToAppend.height = "35";
-    imgToAppend.width = "30";
-    liToAppend.appendChild(imgToAppend);
+    createHearts("live", ol);
   }
 
   for (let i = 0; i < 5 - numLives; i++) {
-    let liToAppend = document.createElement("li");
-    liToAppend.className = "tries";
-    ol.appendChild(liToAppend);
-    let imgToAppend = document.createElement("img");
-    imgToAppend.src = "images/lostHeart.png";
-    imgToAppend.height = "35";
-    imgToAppend.width = "30";
-    liToAppend.appendChild(imgToAppend);
+    createHearts("lost", ol);
   }
   while (parentDiv.firstChild) {
     parentDiv.removeChild(parentDiv.firstChild);
   }
   parentDiv.appendChild(ol);
+}
+
+function createHearts(type, parent) {
+  let liToAppend = document.createElement("li");
+  liToAppend.className = "tries";
+  parent.appendChild(liToAppend);
+  let imgToAppend = document.createElement("img");
+  imgToAppend.src = "images/" + type + "Heart.png";
+  imgToAppend.height = "35";
+  imgToAppend.width = "30";
+  liToAppend.appendChild(imgToAppend);
 }
